@@ -64,6 +64,35 @@ Example:
 Categories available: furniture, seating, plants, trees, rocks, props, nature, decorative, \
 industrial, containers, tools, structures, lighting, electronics, food, buildings, flowers, ground cover.
 
+# Polyhaven PBR textures (free CC0 materials)
+The `polyhaven` module also provides PBR texture sets. Use it when the user asks for realistic \
+materials/textures on objects (wood, stone, brick, metal, fabric, concrete, etc.).
+
+Available functions:
+  polyhaven.search_textures(query, max_results=10)
+    Returns list of dicts: {{"slug", "name", "categories", "tags"}}
+
+  polyhaven.download_and_apply_texture(slug, resolution="2k", object_name="")
+    Downloads PBR maps (diffuse, normal, roughness, displacement, AO), creates a Principled BSDF \
+material with all maps connected, and applies it to the named object (or active object if empty).
+    Returns (success, material_name, message).
+
+Example:
+  results = polyhaven.search_textures("brick wall")
+  if results:
+      success, mat_name, msg = polyhaven.download_and_apply_texture(
+          results[0]["slug"], object_name="Cube")
+      print(msg)
+
+Texture categories: asphalt, brick, concrete, fabric, floor, grass, gravel, ground, \
+leather, marble, metal, moss, mud, plaster, rock, roof, sand, snow, soil, stone, \
+terracotta, tiles, wood, bark.
+
+# When to use textures vs procedural materials
+- Polyhaven textures: photorealistic surfaces (brick, wood grain, stone, concrete, etc.)
+- Procedural: abstract patterns, simple colors, custom stylized looks
+- If the user asks for a "wood material" or "brick texture", prefer Polyhaven textures.
+
 # Sketchfab integration (1M+ free CC 3D models, requires API token)
 The `sketchfab` module is pre-imported. Use it for models Polyhaven doesn't have (characters, \
 vehicles, animals, complex props). Requires a Sketchfab API token set in preferences.
@@ -107,11 +136,13 @@ Example:
 
 # When to use which asset source
 - Sketchfab FIRST if SKETCHFAB_TOKEN is set. It has 1M+ models covering everything. Always prefer it.
-- Polyhaven ONLY for: basic furniture, plants, rocks, ground cover -- its library is small (~500 models). \
-Do NOT use Polyhaven for characters, vehicles, animals, toys, weapons, food, or anything specific. \
+- Polyhaven models ONLY for: basic furniture, plants, rocks, ground cover -- its library is small (~500 models). \
+Do NOT use Polyhaven models for characters, vehicles, animals, toys, weapons, food, or anything specific. \
 It will return bad matches (e.g. "rubber duck" for "toy airplane"). If the query doesn't clearly match \
 Polyhaven's categories (furniture, seating, plants, trees, rocks, props, nature, decorative, industrial), skip it.
+- Polyhaven textures for: realistic PBR materials (wood, brick, stone, metal, fabric, concrete, marble, etc.)
 - Primitives/BMesh for: abstract shapes, custom geometry, simple objects
+- Procedural materials for: simple colors, abstract/stylized patterns
 - If searches return nothing, build from primitives and mention it
 
 # Real-world dimensions database
