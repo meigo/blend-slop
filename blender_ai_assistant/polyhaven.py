@@ -19,6 +19,7 @@ CACHE_DIR = os.path.join(os.path.expanduser("~"), ".blender_ai_assistant", "poly
 # In-memory caches for asset catalogs
 _asset_cache = None
 _texture_cache = None
+_hdri_cache = None
 
 
 def _get_cache_dir() -> str:
@@ -608,3 +609,146 @@ def download_and_apply_texture(slug: str, resolution: str = "2k",
 
     map_names = ", ".join(map_paths.keys())
     return True, mat.name, f"Applied '{slug}' to '{obj.name}' ({map_names})"
+
+
+# ---------------------------------------------------------------------------
+# Polyhaven HDRIs (environment lighting)
+# ---------------------------------------------------------------------------
+
+
+def _get_hdri_cache_path(slug: str, resolution: str) -> str:
+    return os.path.join(_get_cache_dir(), f"hdri_{slug}_{resolution}")
+
+
+def _get_cached_hdri(slug: str, resolution: str) -> str | None:
+    """Return the cached HDRI file path, or None if not cached."""
+    cache_path = _get_hdri_cache_path(slug, resolution)
+    if not os.path.isdir(cache_path):
+        return None
+    for f in os.listdir(cache_path):
+        if f.endswith((".hdr", ".exr")):
+            return os.path.join(cache_path, f)
+    return None
+
+
+def get_all_hdris() -> dict[str, Any]:
+    """Fetch and cache the full HDRI catalog from Polyhaven."""
+    global _hdri_cache
+    if _hdri_cache is not None:
+        return _hdri_cache
+    _hdri_cache = _api_get("/assets?type=hdris")
+    return _hdri_cache
+
+
+def search_hdris(query: str, max_results: int = 10) -> list[dict[str, Any]]:
+    """Search HDRIs by matching query against name, tags, and categories."""
+    assets = get_all_hdris()
+    query_lower = query.lower()
+    query_words = query_lower.split()
+
+    scored = []
+    for slug, info in assets.items():
+        name = info.get("name", "").lower()
+        tags = [t.lower() for t in info.get("tags", [])]
+        categories = [c.lower() for c in info.get("categories", [])]
+        all_text = name + " " + " ".join(tags) + " " + " ".join(categories)
+
+        score = sum(1 for w in query_words if re.search(r'\b' + re.escape(w) + r'\b', all_text))
+        if score > 0:
+            scored.append((score, info.get("download_count", 0), slug, info))
+
+    scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+
+    results = []
+    for score, _, slug, info in scored[:max_results]:
+        results.append({
+            "slug": slug,
+            "name": info.get("name", slug),
+            "categories": info.get("categories", []),
+            "tags": info.get("tags", []),
+        })
+    return results
+
+
+def get_hdri_download_url(slug: str, resolution: str = "2k") -> str | None:
+    """Get the direct download URL for an HDRI. Prefers .hdr format."""
+    files = _api_get(f"/files/{slug}")
+    hdri_files = files.get("hdri")
+    if not hdri_files:
+        return None
+
+    for res in [resolution, "2k", "1k", "4k"]:
+        res_data = hdri_files.get(res)
+        if not res_data:
+            continue
+        # Prefer .hdr (smaller than .exr, works great in Blender)
+        entry = res_data.get("hdr") or res_data.get("exr")
+        if entry and "url" in entry:
+            return entry["url"]
+
+    return None
+
+
+def download_and_apply_hdri(slug: str, resolution: str = "2k",
+                            strength: float = 1.0) -> tuple[bool, str]:
+    """Download an HDRI from Polyhaven and set it as the world environment.
+
+    Args:
+        slug: Polyhaven HDRI slug.
+        resolution: "1k", "2k", or "4k".
+        strength: Background light strength (default 1.0).
+
+    Returns (success, message).
+    """
+    # Check cache first
+    cached = _get_cached_hdri(slug, resolution)
+
+    if not cached:
+        url = get_hdri_download_url(slug, resolution)
+        if not url:
+            return False, f"No HDRI file found for '{slug}'"
+
+        try:
+            cache_dir = _get_hdri_cache_path(slug, resolution)
+            if os.path.exists(cache_dir):
+                shutil.rmtree(cache_dir, ignore_errors=True)
+            os.makedirs(cache_dir, exist_ok=True)
+
+            cached = download_file(url, cache_dir)
+        except Exception as e:
+            return False, f"Download failed: {e}"
+
+    # Set up world environment nodes
+    world = bpy.data.worlds.get("World")
+    if not world:
+        world = bpy.data.worlds.new("World")
+    bpy.context.scene.world = world
+    world.use_nodes = True
+
+    nodes = world.node_tree.nodes
+    links = world.node_tree.links
+    nodes.clear()
+
+    tex_coord = nodes.new('ShaderNodeTexCoord')
+    tex_coord.location = (-800, 0)
+
+    mapping = nodes.new('ShaderNodeMapping')
+    mapping.location = (-600, 0)
+
+    env_tex = nodes.new('ShaderNodeTexEnvironment')
+    env_tex.location = (-300, 0)
+    env_tex.image = bpy.data.images.load(cached)
+
+    bg = nodes.new('ShaderNodeBackground')
+    bg.location = (0, 0)
+    bg.inputs["Strength"].default_value = strength
+
+    output = nodes.new('ShaderNodeOutputWorld')
+    output.location = (200, 0)
+
+    links.new(tex_coord.outputs["Generated"], mapping.inputs["Vector"])
+    links.new(mapping.outputs["Vector"], env_tex.inputs["Vector"])
+    links.new(env_tex.outputs["Color"], bg.inputs["Color"])
+    links.new(bg.outputs["Background"], output.inputs["Surface"])
+
+    return True, f"Applied HDRI '{slug}' as world environment (strength={strength})"

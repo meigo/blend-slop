@@ -88,6 +88,28 @@ Texture categories: asphalt, brick, concrete, fabric, floor, grass, gravel, grou
 leather, marble, metal, moss, mud, plaster, rock, roof, sand, snow, soil, stone, \
 terracotta, tiles, wood, bark.
 
+# Polyhaven HDRIs (free CC0 environment lighting)
+The `polyhaven` module also provides HDRI environment maps. Use it when the user asks for \
+realistic environment lighting, sky backgrounds, or specific lighting moods.
+
+Available functions:
+  polyhaven.search_hdris(query, max_results=10)
+    Returns list of dicts: {{"slug", "name", "categories", "tags"}}
+
+  polyhaven.download_and_apply_hdri(slug, resolution="2k", strength=1.0)
+    Downloads an HDRI and sets it as the world environment with full node setup \
+(Tex Coord -> Mapping -> Environment Texture -> Background -> World Output).
+    Returns (success, message).
+
+Example:
+  results = polyhaven.search_hdris("sunset")
+  if results:
+      success, msg = polyhaven.download_and_apply_hdri(results[0]["slug"], strength=1.0)
+      print(msg)
+
+HDRI categories: outdoor, indoor, urban, nature, studio, sunset, sunrise, overcast, \
+clear sky, partly cloudy, night, high contrast, low contrast, natural light, artificial light.
+
 # When to use textures vs procedural materials
 - Polyhaven textures: photorealistic surfaces (brick, wood grain, stone, concrete, etc.)
 - Procedural: abstract patterns, simple colors, custom stylized looks
@@ -366,6 +388,110 @@ SUN - directional, no falloff (outdoor)
 SPOT - cone (flashlights, stage), spot_size for angle
 AREA - rectangular emitter, softest shadows (studio lighting)
 Three-point setup: key (45deg, strongest), fill (opposite, 50%), rim (behind, edge highlight)
+
+# Physics simulation
+## Rigid body (falling, collisions, stacking)
+bpy.context.view_layer.objects.active = obj
+bpy.ops.rigidbody.object_add(type='ACTIVE')  # ACTIVE = affected by physics
+obj.rigid_body.mass = 1.0
+obj.rigid_body.friction = 0.5
+obj.rigid_body.restitution = 0.3  # bounciness
+# For ground/walls: type='PASSIVE' (doesn't move, other objects bounce off it)
+# Bake: bpy.ops.ptcache.bake_all(bake=True)
+
+## Cloth simulation
+mod = obj.modifiers.new(name="Cloth", type='CLOTH')
+mod.settings.quality = 5
+mod.settings.mass = 0.3
+mod.settings.tension_stiffness = 15  # higher = stiffer
+mod.settings.compression_stiffness = 15
+mod.collision_settings.collision_quality = 2
+# Pin group: mod.settings.vertex_group_mass = "Pin"  (weight-painted group)
+
+## Fluid simulation (Mantaflow)
+# Domain (container):
+mod = domain_obj.modifiers.new(name="Fluid", type='FLUID')
+mod.fluid_type = 'DOMAIN'
+mod.domain_settings.domain_type = 'LIQUID'  # or 'GAS' for smoke/fire
+mod.domain_settings.resolution_divisions = 64
+# Flow (emitter):
+mod = emitter_obj.modifiers.new(name="Fluid", type='FLUID')
+mod.fluid_type = 'FLOW'
+mod.flow_settings.flow_type = 'LIQUID'  # or 'SMOKE', 'FIRE', 'BOTH'
+mod.flow_settings.flow_behavior = 'INFLOW'  # or 'GEOMETRY'
+# Effector (obstacle):
+mod = obstacle_obj.modifiers.new(name="Fluid", type='FLUID')
+mod.fluid_type = 'EFFECTOR'
+
+## Particle system (hair, rain, debris)
+mod = obj.modifiers.new(name="Particles", type='PARTICLE_SYSTEM')
+ps = mod.particle_system.settings
+ps.count = 1000
+ps.lifetime = 50
+ps.emit_from = 'FACE'  # or 'VOLUME', 'VERT'
+# Hair: ps.type = 'HAIR'
+# Emitter: ps.type = 'EMITTER'
+ps.physics_type = 'NEWTON'  # or 'KEYED', 'BOIDS', 'FLUID'
+ps.normal_factor = 1.0  # emit speed along normals
+ps.effector_weights.gravity = 1.0
+
+# Geometry nodes (procedural generation)
+## Create a geometry nodes modifier
+mod = obj.modifiers.new(name="GeometryNodes", type='NODES')
+tree = bpy.data.node_groups.new("MyGeoNodes", 'GeometryNodeTree')
+mod.node_group = tree
+
+## Set up basic input/output
+tree.interface.new_socket(name="Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
+tree.interface.new_socket(name="Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
+input_node = tree.nodes.new('NodeGroupInput')
+output_node = tree.nodes.new('NodeGroupOutput')
+input_node.location = (-300, 0)
+output_node.location = (300, 0)
+
+## Common geometry nodes
+# Scatter points on surface:
+distribute = tree.nodes.new('GeometryNodeDistributePointsOnFaces')
+distribute.distribute_method = 'RANDOM'  # or 'POISSON'
+instance = tree.nodes.new('GeometryNodeInstanceOnPoints')
+# Join original mesh + instances:
+join = tree.nodes.new('GeometryNodeJoinGeometry')
+
+# Mesh operations:
+subdivide = tree.nodes.new('GeometryNodeSubdivideMesh')
+extrude = tree.nodes.new('GeometryNodeExtrudeMesh')
+set_pos = tree.nodes.new('GeometryNodeSetPosition')
+
+# Math/transforms:
+math_node = tree.nodes.new('ShaderNodeMath')  # Add, Multiply, etc.
+vec_math = tree.nodes.new('ShaderNodeVectorMath')
+noise = tree.nodes.new('ShaderNodeTexNoise')  # procedural displacement
+
+## Add custom parameters
+tree.interface.new_socket(name="Count", in_out='INPUT', socket_type='NodeSocketInt')
+tree.interface.new_socket(name="Scale", in_out='INPUT', socket_type='NodeSocketFloat')
+# Set defaults via modifier: mod["Socket_2"] = 10
+
+# HDRI environment lighting
+## Set up world environment with an HDRI image
+world = bpy.data.worlds.get("World") or bpy.data.worlds.new("World")
+bpy.context.scene.world = world
+world.use_nodes = True
+nodes = world.node_tree.nodes
+links = world.node_tree.links
+nodes.clear()
+bg = nodes.new('ShaderNodeBackground')
+env_tex = nodes.new('ShaderNodeTexEnvironment')
+env_tex.image = bpy.data.images.load("/path/to/hdri.exr")
+mapping = nodes.new('ShaderNodeMapping')
+tex_coord = nodes.new('ShaderNodeTexCoord')
+output = nodes.new('ShaderNodeOutputWorld')
+links.new(tex_coord.outputs["Generated"], mapping.inputs["Vector"])
+links.new(mapping.outputs["Vector"], env_tex.inputs["Vector"])
+links.new(env_tex.outputs["Color"], bg.inputs["Color"])
+links.new(bg.outputs["Background"], output.inputs["Surface"])
+bg.inputs["Strength"].default_value = 1.0  # adjust brightness
+# Rotate HDRI: mapping.inputs["Rotation"].default_value[2] = radians(90)
 """
 
 

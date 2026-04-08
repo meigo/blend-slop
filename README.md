@@ -16,7 +16,7 @@ A chat panel inside Blender's 3D viewport that lets you control Blender through 
 - Sends current scene state to the LLM (objects, materials, modifiers, node trees, lights, cameras, enabled addons)
 - Auto-executes generated code with automatic error retry (sends traceback back to LLM for correction)
 - **Sketchfab integration** -- search and download from 1M+ free CC-licensed 3D models (characters, vehicles, animals, props)
-- **Polyhaven integration** -- download CC0 3D models (furniture, plants, rocks, nature) and PBR textures (wood, brick, stone, metal, fabric, etc.) with no auth needed
+- **Polyhaven integration** -- download CC0 3D models (furniture, plants, rocks, nature), PBR textures (wood, brick, stone, metal, fabric, etc.), and HDRIs (environment lighting) with no auth needed
 - **Auto-scaling** -- downloaded models are scaled to real-world size based on LLM's height estimate
 - **Dimensions database** -- 300+ real-world object heights for correctly scaled primitive creation
 - **PBR material creation** -- automatically builds full Principled BSDF node trees from downloaded texture maps (diffuse, normal, roughness, displacement, AO)
@@ -50,6 +50,12 @@ A chat panel inside Blender's 3D viewport that lets you control Blender through 
 "Find a dragon model on Sketchfab and add it to the scene"
 "Animate the camera orbiting around the origin over 120 frames"
 "Render at 1080p with transparent background"
+"Make the cube spin continuously on the Z axis"
+"At frame 50, lift the plant 2 units, hold it there for 25 frames with a violent shake, then drop it back down with a bounce"
+"Set up a sunset HDRI for the scene"
+"Add rigid body physics to all the objects so they fall and collide"
+"Scatter rocks across the terrain using geometry nodes"
+"Create a cloth simulation on the tablecloth"
 ```
 
 ## Development

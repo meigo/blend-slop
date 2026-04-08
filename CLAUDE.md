@@ -6,6 +6,7 @@ Monorepo for Blender addons. Each subfolder is a self-contained Blender extensio
 - One feature per commit. Do not batch unrelated changes.
 - ALWAYS update README.md before pushing if features changed (new integrations, new settings, new usage examples)
 - Lint check: no unused imports, no f-strings without placeholders, no multi-statement lines
+- ALWAYS lint and fix issues after generating or modifying code (check syntax, type annotations, unused imports, f-strings)
 
 ## Build & release
 Do NOT zip after every code change. Only build the zip when creating a release:
@@ -36,7 +37,7 @@ AI chat panel in Blender's 3D viewport sidebar.
 - Rich system prompt with Blender 5.x API reference + workflow knowledge
 - Scene context injection (objects, materials, modifiers, nodes, addons)
 - Auto-executes generated code with error retry loop
-- Polyhaven integration (CC0 3D models, local caching, scene deduplication)
+- Polyhaven integration (CC0 3D models, PBR textures, HDRIs, local caching, scene deduplication)
 - Conversation log + structured error collection in Blender Text blocks
 
 ### Code style
