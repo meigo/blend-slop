@@ -17,7 +17,10 @@ A chat panel inside Blender's 3D viewport that lets you control Blender through 
 - Auto-executes generated code with automatic error retry (sends traceback back to LLM for correction)
 - **Sketchfab integration** -- search and download from 1M+ free CC-licensed 3D models (characters, vehicles, animals, props)
 - **Polyhaven integration** -- download CC0 3D models (furniture, plants, rocks, nature) with no auth needed
+- **Auto-scaling** -- downloaded models are scaled to real-world size based on LLM's height estimate
+- **Dimensions database** -- 300+ real-world object heights for correctly scaled primitive creation
 - Local caching and scene deduplication for downloaded models
+- Smart search result filtering -- validates Sketchfab results by name relevance before importing
 - Full conversation log and structured error collection in Blender Text blocks
 
 **Requirements:**
