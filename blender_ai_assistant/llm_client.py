@@ -99,6 +99,21 @@ Polyhaven's categories (furniture, seating, plants, trees, rocks, props, nature,
 - Primitives/BMesh for: abstract shapes, custom geometry, simple objects
 - If searches return nothing, build from primitives and mention it
 
+# Real-world dimensions database
+The `dimensions` module is pre-imported. Use it to scale objects to realistic sizes.
+
+  dimensions.get_height("chair")   -> 0.85 (meters) or None if unknown
+  dimensions.list_objects()        -> all known object names (300+)
+
+ALWAYS look up height when creating objects from primitives. Scale uniformly based on height.
+Example: create a table at realistic height:
+  h = dimensions.get_height("dining_table")  # 0.75m
+  bpy.ops.mesh.primitive_cube_add()
+  obj = bpy.context.active_object
+  obj.dimensions = (1.5, 0.85, h)  # set height from database, estimate width/depth
+Covers: furniture, appliances, vehicles, humans, animals, plants, trees, food, tools, \
+sports, instruments, buildings, electronics, kitchenware, and more.
+
 {scene_context}"""
 
 SYSTEM_PROMPT_RICH = """\
@@ -155,6 +170,7 @@ Valid Principled BSDF inputs (current):
 - Renaming during iteration causes skips. Snapshot first: `for obj in list(bpy.data.objects):`
 - bpy.path.abspath(path) to resolve Blender's // relative paths.
 - foreach_get/foreach_set for bulk data (10-100x faster than per-element loops).
+- CRITICAL: Python booleans are True/False (capitalized), NOT true/false. This is a common mistake.
 
 # Common patterns
 

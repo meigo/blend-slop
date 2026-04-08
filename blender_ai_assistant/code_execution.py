@@ -8,6 +8,7 @@ from contextlib import redirect_stdout, redirect_stderr
 
 from . import polyhaven
 from . import sketchfab
+from . import dimensions
 
 
 SAFE_NAMESPACE = {
@@ -22,6 +23,7 @@ SAFE_NAMESPACE = {
     "Color": mathutils.Color,
     "polyhaven": polyhaven,
     "sketchfab": sketchfab,
+    "dimensions": dimensions,
 }
 
 
