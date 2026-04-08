@@ -2,6 +2,10 @@
 
 Monorepo for Blender addons. Each subfolder is a self-contained Blender extension.
 
+## Before committing
+- Update README.md if features changed (new integrations, new settings, new usage examples)
+- Lint check: no unused imports, no f-strings without placeholders, no multi-statement lines
+
 ## Build & release
 Do NOT zip after every code change. Only build the zip when creating a release:
 ```

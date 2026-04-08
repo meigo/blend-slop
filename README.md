@@ -15,12 +15,15 @@ A chat panel inside Blender's 3D viewport that lets you control Blender through 
 - Understands natural language ("make it glossy", "add thickness", "three-point lighting") and maps to correct Blender operations
 - Sends current scene state to the LLM (objects, materials, modifiers, node trees, lights, cameras, enabled addons)
 - Auto-executes generated code with automatic error retry (sends traceback back to LLM for correction)
-- **Polyhaven integration** -- downloads CC0 3D models (furniture, plants, rocks, props) directly into the scene with local caching
+- **Sketchfab integration** -- search and download from 1M+ free CC-licensed 3D models (characters, vehicles, animals, props)
+- **Polyhaven integration** -- download CC0 3D models (furniture, plants, rocks, nature) with no auth needed
+- Local caching and scene deduplication for downloaded models
 - Full conversation log and structured error collection in Blender Text blocks
 
 **Requirements:**
 - Blender 5.0+
 - API key for Claude or OpenAI (or a running Ollama instance for local models)
+- Optional: Sketchfab API token for model downloads (get from [sketchfab.com/settings/password](https://sketchfab.com/settings/password))
 
 ### Installation
 
@@ -37,7 +40,8 @@ A chat panel inside Blender's 3D viewport that lets you control Blender through 
 "Add a red metallic sphere next to the cube"
 "Set up three-point lighting for the scene"
 "Make the floor material look like polished concrete"
-"Add an armchair from Polyhaven near the table"
+"Add an armchair near the table"
+"Find a dragon model on Sketchfab and add it to the scene"
 "Animate the camera orbiting around the origin over 120 frames"
 "Render at 1080p with transparent background"
 ```
