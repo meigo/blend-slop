@@ -1,0 +1,16 @@
+schema_version = "1.0.0"
+
+id = "blender_ai_assistant"
+version = "1.0.0"
+name = "AI Assistant"
+tagline = "Chat with an AI assistant to control Blender via natural language"
+maintainer = "blend-slop"
+type = "add-on"
+
+blender_version_min = "5.0.0"
+
+tags = ["Development"]
+license = ["SPDX:MIT"]
+
+[permissions]
+network = "Connects to LLM APIs (Claude, OpenAI, Ollama) for AI chat"

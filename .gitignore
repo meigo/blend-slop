@@ -1,0 +1,18 @@
+# Build artifacts
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# Temp/scratch
+temp/
+
+# OS
+.DS_Store
+Thumbs.db

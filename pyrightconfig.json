@@ -1,0 +1,7 @@
+{
+  "reportMissingModuleSource": false,
+  "reportMissingImports": "warning",
+  "extraPaths": [],
+  "pythonVersion": "3.11",
+  "ignore": ["blender_ai_assistant"]
+}
