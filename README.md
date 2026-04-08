@@ -16,10 +16,11 @@ A chat panel inside Blender's 3D viewport that lets you control Blender through 
 - Sends current scene state to the LLM (objects, materials, modifiers, node trees, lights, cameras, enabled addons)
 - Auto-executes generated code with automatic error retry (sends traceback back to LLM for correction)
 - **Sketchfab integration** -- search and download from 1M+ free CC-licensed 3D models (characters, vehicles, animals, props)
-- **Polyhaven integration** -- download CC0 3D models (furniture, plants, rocks, nature) with no auth needed
+- **Polyhaven integration** -- download CC0 3D models (furniture, plants, rocks, nature) and PBR textures (wood, brick, stone, metal, fabric, etc.) with no auth needed
 - **Auto-scaling** -- downloaded models are scaled to real-world size based on LLM's height estimate
 - **Dimensions database** -- 300+ real-world object heights for correctly scaled primitive creation
-- Local caching and scene deduplication for downloaded models
+- **PBR material creation** -- automatically builds full Principled BSDF node trees from downloaded texture maps (diffuse, normal, roughness, displacement, AO)
+- Local caching and scene deduplication for downloaded models and textures
 - Smart search result filtering -- validates Sketchfab results by name relevance before importing
 - Full conversation log and structured error collection in Blender Text blocks
 
@@ -43,6 +44,8 @@ A chat panel inside Blender's 3D viewport that lets you control Blender through 
 "Add a red metallic sphere next to the cube"
 "Set up three-point lighting for the scene"
 "Make the floor material look like polished concrete"
+"Add a brick texture to the wall"
+"Apply a wood material to the table"
 "Add an armchair near the table"
 "Find a dragon model on Sketchfab and add it to the scene"
 "Animate the camera orbiting around the origin over 120 frames"
