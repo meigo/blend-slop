@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 import json
+import mathutils
 import os
 import shutil
 import urllib.request
@@ -140,17 +141,19 @@ def _duplicate_from_scene(existing_empty: bpy.types.Object) -> str:
     return new_empty.name
 
 
-def download_and_import(uid: str, token: str, name: str = "") -> tuple[bool, str | None, str]:
+def download_and_import(uid: str, token: str, name: str = "", target_height: float = 0.0) -> tuple[bool, str | None, str]:
     """Download a model from Sketchfab and import it into the current scene.
 
     - If already in scene, duplicates it.
     - If cached on disk, imports from cache.
     - Otherwise downloads to persistent cache, then imports.
+    - If target_height > 0, scales the model so its bounding box height matches.
 
     Args:
         uid: Sketchfab model UID.
         token: Sketchfab API token (required for download).
         name: Display name for the empty parent. Defaults to uid.
+        target_height: Desired real-world height in meters. 0 = no scaling.
 
     Returns (success, empty_name, message).
     """
@@ -161,6 +164,8 @@ def download_and_import(uid: str, token: str, name: str = "") -> tuple[bool, str
     existing = _find_existing_in_scene(uid)
     if existing:
         new_name = _duplicate_from_scene(existing)
+        if target_height > 0:
+            _scale_to_height(new_name, target_height)
         return True, new_name, f"Duplicated '{display_name}' from scene (parent: {new_name})"
 
     # 2. Check local cache
@@ -171,6 +176,8 @@ def download_and_import(uid: str, token: str, name: str = "") -> tuple[bool, str
                 imported = _import_glb(filepath, existing_objects)
                 if imported:
                     empty_name = _parent_under_empty(display_name, uid, imported, existing_objects)
+                    if target_height > 0:
+                        _scale_to_height(empty_name, target_height)
                     return True, empty_name, f"Imported '{display_name}' from cache ({len(imported)} objects)"
             except Exception:
                 pass
@@ -196,6 +203,8 @@ def download_and_import(uid: str, token: str, name: str = "") -> tuple[bool, str
             return False, None, "Import completed but no new objects found"
 
         empty_name = _parent_under_empty(display_name, uid, imported, existing_objects)
+        if target_height > 0:
+            _scale_to_height(empty_name, target_height)
         return True, empty_name, f"Imported '{display_name}' from Sketchfab ({len(imported)} objects, parent: {empty_name})"
 
     except Exception as e:
@@ -216,6 +225,33 @@ def _parent_under_empty(name: str, uid: str, imported: list[bpy.types.Object], e
         if obj.parent is None or obj.parent.name in existing_objects:
             obj.parent = empty
     return empty.name
+
+
+def _scale_to_height(empty_name: str, target_height: float) -> None:
+    """Scale the empty (and all children) so the model's bounding box height matches target_height."""
+    empty = bpy.data.objects.get(empty_name)
+    if not empty or not empty.children:
+        return
+
+    # Force dependency graph update so bounding boxes are correct
+    bpy.context.view_layer.update()
+
+    # Calculate combined bounding box of all children
+    min_z = float("inf")
+    max_z = float("-inf")
+    for child in empty.children:
+        if hasattr(child, "bound_box"):
+            for corner in child.bound_box:
+                world_z = (child.matrix_world @ mathutils.Vector(corner)).z
+                min_z = min(min_z, world_z)
+                max_z = max(max_z, world_z)
+
+    current_height = max_z - min_z
+    if current_height <= 0.001:
+        return
+
+    scale_factor = target_height / current_height
+    empty.scale = (scale_factor, scale_factor, scale_factor)
 
 
 def clear_cache() -> tuple[int, float]:

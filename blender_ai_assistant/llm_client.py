@@ -46,18 +46,17 @@ Available functions:
     Returns list of dicts: {{"slug", "name", "categories", "tags", "polycount"}}
     Search matches against name, tags, and categories.
 
-  polyhaven.download_and_import(slug, resolution="2k")
+  polyhaven.download_and_import(slug, resolution="2k", target_height=0.0)
     Downloads and imports a model. All parts are parented under one empty.
-    If the model is already in the scene, duplicates it instead of re-downloading.
-    Downloads are cached locally so subsequent imports are instant.
+    If target_height > 0, auto-scales the model to that height in meters.
     Returns (success, empty_name, message).
-    Resolutions: "1k", "2k", "4k". Use "1k" for fast previews, "2k" for default, "4k" for final.
-    To position the model, move/rotate/scale the empty by name.
+    ALWAYS pass target_height with the real-world height of the object in meters.
 
 Example:
   results = polyhaven.search_models("chair")
   if results:
-      success, empty_name, msg = polyhaven.download_and_import(results[0]["slug"])
+      success, empty_name, msg = polyhaven.download_and_import(
+          results[0]["slug"], target_height=0.85)  # chair is ~85cm tall
       if success:
           bpy.data.objects[empty_name].location = (2, 0, 0)
       print(msg)
@@ -75,8 +74,10 @@ Available functions:
     {{"uid", "name", "license", "author", "face_count", "vertex_count", "likes"}}
     license_filter: "cc0", "by", "by-sa", "by-nc", or "" for all.
 
-  sketchfab.download_and_import(uid, token, name="")
+  sketchfab.download_and_import(uid, token, name="", target_height=0.0)
     Downloads and imports as GLB. Token required. Returns (success, empty_name, message).
+    If target_height > 0, auto-scales the model to that height in meters.
+    ALWAYS pass target_height with the real-world height of the object in meters.
     The variable SKETCHFAB_TOKEN is pre-set from addon preferences. Use it directly.
 
 IMPORTANT: Do NOT blindly use results[0]. Search results may be irrelevant. Always print the \
@@ -97,7 +98,7 @@ Example:
               break
       if best:
           success, empty_name, msg = sketchfab.download_and_import(
-              best["uid"], SKETCHFAB_TOKEN, best["name"])
+              best["uid"], SKETCHFAB_TOKEN, best["name"], target_height=0.35)  # old Mac ~35cm
           print(msg)
       else:
           print("No relevant model found on Sketchfab for this query.")

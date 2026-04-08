@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 import json
+import mathutils
 import os
 import shutil
 import urllib.request
@@ -235,12 +236,38 @@ def _parent_under_empty(slug: str, imported: list[bpy.types.Object], existing_ob
     return empty.name
 
 
-def download_and_import(slug: str, resolution: str = "2k") -> tuple[bool, str | None, str]:
+def _scale_to_height(empty_name: str, target_height: float) -> None:
+    """Scale the empty (and all children) so the model's bounding box height matches target_height."""
+    empty = bpy.data.objects.get(empty_name)
+    if not empty or not empty.children:
+        return
+
+    bpy.context.view_layer.update()
+
+    min_z = float("inf")
+    max_z = float("-inf")
+    for child in empty.children:
+        if hasattr(child, "bound_box"):
+            for corner in child.bound_box:
+                world_z = (child.matrix_world @ mathutils.Vector(corner)).z
+                min_z = min(min_z, world_z)
+                max_z = max(max_z, world_z)
+
+    current_height = max_z - min_z
+    if current_height <= 0.001:
+        return
+
+    scale_factor = target_height / current_height
+    empty.scale = (scale_factor, scale_factor, scale_factor)
+
+
+def download_and_import(slug: str, resolution: str = "2k", target_height: float = 0.0) -> tuple[bool, str | None, str]:
     """Download a model from Polyhaven and import it into the current scene.
 
     - If the model is already in the scene, duplicates it (no download).
     - If cached on disk, imports from cache (no download).
     - Otherwise downloads to persistent cache, then imports.
+    - If target_height > 0, scales the model so its bounding box height matches.
 
     All parts are parented under a single empty.
     Returns (success, empty_name, message).
@@ -251,6 +278,8 @@ def download_and_import(slug: str, resolution: str = "2k") -> tuple[bool, str | 
     existing = _find_existing_in_scene(slug)
     if existing:
         new_name = _duplicate_from_scene(existing)
+        if target_height > 0:
+            _scale_to_height(new_name, target_height)
         return True, new_name, f"Duplicated '{slug}' from scene (parent: {new_name})"
 
     # 2. Check local cache
@@ -262,6 +291,8 @@ def download_and_import(slug: str, resolution: str = "2k") -> tuple[bool, str | 
                 imported = _import_from_file(filepath, cache_dir)
                 if imported:
                     empty_name = _parent_under_empty(slug, imported, existing_objects)
+                    if target_height > 0:
+                        _scale_to_height(empty_name, target_height)
                     return True, empty_name, f"Imported '{slug}' from cache ({len(imported)} objects, parent: {empty_name})"
             except Exception:
                 # Cache might be corrupted, fall through to re-download
@@ -290,6 +321,8 @@ def download_and_import(slug: str, resolution: str = "2k") -> tuple[bool, str | 
             return False, None, "Import completed but no new objects found"
 
         empty_name = _parent_under_empty(slug, imported, existing_objects)
+        if target_height > 0:
+            _scale_to_height(empty_name, target_height)
         return True, empty_name, f"Imported '{slug}' from Polyhaven ({len(imported)} objects, parent: {empty_name})"
 
     except Exception as e:
