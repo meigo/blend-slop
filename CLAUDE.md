@@ -2,7 +2,8 @@
 
 Monorepo for Blender addons. Each subfolder is a self-contained Blender extension.
 
-## Before committing
+## Commit discipline
+- One feature per commit. Do not batch unrelated changes.
 - Update README.md if features changed (new integrations, new settings, new usage examples)
 - Lint check: no unused imports, no f-strings without placeholders, no multi-statement lines
 
