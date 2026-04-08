@@ -79,14 +79,28 @@ Available functions:
     Downloads and imports as GLB. Token required. Returns (success, empty_name, message).
     The variable SKETCHFAB_TOKEN is pre-set from addon preferences. Use it directly.
 
+IMPORTANT: Do NOT blindly use results[0]. Search results may be irrelevant. Always print the \
+top results and pick the best match by checking the name. If no result name is a reasonable \
+match for what was requested, say so instead of importing a wrong model.
+
 Example:
-  results = sketchfab.search_models("dragon")
+  results = sketchfab.search_models("old mac computer")
   if results and SKETCHFAB_TOKEN:
-      success, empty_name, msg = sketchfab.download_and_import(
-          results[0]["uid"], SKETCHFAB_TOKEN, results[0]["name"])
-      if success:
-          bpy.data.objects[empty_name].location = (0, 0, 0)
-      print(msg)
+      # Review results -- pick the best match by name
+      best = None
+      for r in results:
+          print(f"  Found: {r['name']} (by {r['author']}, {r['face_count']} faces)")
+          # Check if the name is relevant to what we want
+          name_lower = r["name"].lower()
+          if "mac" in name_lower or "computer" in name_lower or "macintosh" in name_lower:
+              best = r
+              break
+      if best:
+          success, empty_name, msg = sketchfab.download_and_import(
+              best["uid"], SKETCHFAB_TOKEN, best["name"])
+          print(msg)
+      else:
+          print("No relevant model found on Sketchfab for this query.")
   elif not SKETCHFAB_TOKEN:
       print("Sketchfab API key not set. Add it in AI Assistant settings.")
 
