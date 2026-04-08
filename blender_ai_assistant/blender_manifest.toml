@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "blender_ai_assistant"
-version = "1.0.0"
+version = "1.1.0"
 name = "AI Assistant"
 tagline = "Chat with an AI assistant to control Blender via natural language"
 maintainer = "blend-slop"
