@@ -89,7 +89,7 @@ Example:
       # Review results -- pick the best match by name
       best = None
       for r in results:
-          print(f"  Found: {r['name']} (by {r['author']}, {r['face_count']} faces)")
+          print("  Found:", r["name"], "by", r["author"], "-", r["face_count"], "faces")
           # Check if the name is relevant to what we want
           name_lower = r["name"].lower()
           if "mac" in name_lower or "computer" in name_lower or "macintosh" in name_lower:
