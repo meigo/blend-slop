@@ -2,18 +2,14 @@
 
 Monorepo for Blender addons. Each subfolder is a self-contained Blender extension.
 
-## Build rule
-After every code change to an addon, rebuild its installable zip:
+## Build & release
+Do NOT zip after every code change. Only build the zip when creating a release:
 ```
-powershell -Command "Compress-Archive -Path blender_ai_assistant -DestinationPath blender_ai_assistant.zip -Force"
-```
-The zip goes in the project root. Gitignored -- not committed.
-
-## Release rule
-After significant changes, create a GitHub release with the zip attached:
-```
+python -c "import shutil; shutil.make_archive('blender_ai_assistant', 'zip', '.', 'blender_ai_assistant')"
 gh release create v0.x.0 blender_ai_assistant.zip --title "AI Assistant v0.x.0" --notes "changelog here"
 ```
+The zip is gitignored. For development, install the addon by symlinking the source folder
+into Blender's extensions directory.
 
 ## Target
 - Blender 5.0+ (new extension format with `blender_manifest.toml`, `layout.panel()`, etc.)

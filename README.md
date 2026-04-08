@@ -49,7 +49,7 @@ A chat panel inside Blender's 3D viewport that lets you control Blender through 
 pip install fake-bpy-module-latest
 
 # Build installable zip
-powershell -Command "Compress-Archive -Path blender_ai_assistant -DestinationPath blender_ai_assistant.zip -Force"
+python -c "import shutil; shutil.make_archive('blender_ai_assistant', 'zip', '.', 'blender_ai_assistant')"
 ```
 
 ## License

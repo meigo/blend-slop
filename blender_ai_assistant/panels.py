@@ -62,11 +62,15 @@ class AIASSIST_PT_main_panel(Panel):
                 row.prop(prefs, "ollama_model", text="")
 
             if prefs.provider == "CLAUDE":
-                panel.prop(prefs, "claude_api_key", text="API Key")
+                panel.prop(prefs, "claude_api_key", text="LLM Key")
             elif prefs.provider == "OPENAI":
-                panel.prop(prefs, "openai_api_key", text="API Key")
+                panel.prop(prefs, "openai_api_key", text="LLM Key")
             elif prefs.provider == "OLLAMA":
                 panel.prop(prefs, "ollama_url", text="URL")
+
+            panel.prop(prefs, "sketchfab_api_key", text="Sketchfab Key")
+
+            panel.separator()
 
             row = panel.row(align=True)
             row.prop(state, "rich_prompt", text="Rich Prompt", icon="FILE_TEXT", toggle=True)
@@ -77,7 +81,10 @@ class AIASSIST_PT_main_panel(Panel):
             row.operator("ai_assistant.copy_errors", text="Copy Errors", icon="COPYDOWN")
             row.operator("ai_assistant.clear_errors", text="", icon="TRASH")
 
-            panel.operator("ai_assistant.clear_polyhaven_cache", text="Clear Polyhaven Cache", icon="FILE_FOLDER")
+            panel.label(text="Clear Cache:")
+            row = panel.row(align=True)
+            row.operator("ai_assistant.clear_polyhaven_cache", text="Polyhaven", icon="TRASH")
+            row.operator("ai_assistant.clear_sketchfab_cache", text="Sketchfab", icon="TRASH")
 
         layout.separator()
 

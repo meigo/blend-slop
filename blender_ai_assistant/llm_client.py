@@ -65,11 +65,39 @@ Example:
 Categories available: furniture, seating, plants, trees, rocks, props, nature, decorative, \
 industrial, containers, tools, structures, lighting, electronics, food, buildings, flowers, ground cover.
 
-When to use Polyhaven vs primitives:
-- User asks for a specific real-world object (chair, table, plant, rock) -> search Polyhaven first
-- User asks for abstract/custom shapes -> use primitives and BMesh
-- User asks for characters/humans -> use primitives (Polyhaven has no characters)
-- If Polyhaven search returns no results, fall back to primitives and mention it
+# Sketchfab integration (1M+ free CC 3D models, requires API token)
+The `sketchfab` module is pre-imported. Use it for models Polyhaven doesn't have (characters, \
+vehicles, animals, complex props). Requires a Sketchfab API token set in preferences.
+
+Available functions:
+  sketchfab.search_models(query, token=None, max_results=10, license_filter="", sort_by="-likeCount")
+    Search is free (no token needed). Returns list of dicts:
+    {{"uid", "name", "license", "author", "face_count", "vertex_count", "likes"}}
+    license_filter: "cc0", "by", "by-sa", "by-nc", or "" for all.
+
+  sketchfab.download_and_import(uid, token, name="")
+    Downloads and imports as GLB. Token required. Returns (success, empty_name, message).
+    The variable SKETCHFAB_TOKEN is pre-set from addon preferences. Use it directly.
+
+Example:
+  results = sketchfab.search_models("dragon")
+  if results and SKETCHFAB_TOKEN:
+      success, empty_name, msg = sketchfab.download_and_import(
+          results[0]["uid"], SKETCHFAB_TOKEN, results[0]["name"])
+      if success:
+          bpy.data.objects[empty_name].location = (0, 0, 0)
+      print(msg)
+  elif not SKETCHFAB_TOKEN:
+      print("Sketchfab API key not set. Add it in AI Assistant settings.")
+
+# When to use which asset source
+- Sketchfab FIRST if SKETCHFAB_TOKEN is set. It has 1M+ models covering everything. Always prefer it.
+- Polyhaven ONLY for: basic furniture, plants, rocks, ground cover -- its library is small (~500 models). \
+Do NOT use Polyhaven for characters, vehicles, animals, toys, weapons, food, or anything specific. \
+It will return bad matches (e.g. "rubber duck" for "toy airplane"). If the query doesn't clearly match \
+Polyhaven's categories (furniture, seating, plants, trees, rocks, props, nature, decorative, industrial), skip it.
+- Primitives/BMesh for: abstract shapes, custom geometry, simple objects
+- If searches return nothing, build from primitives and mention it
 
 {scene_context}"""
 

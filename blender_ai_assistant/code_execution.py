@@ -7,6 +7,7 @@ import traceback
 from contextlib import redirect_stdout, redirect_stderr
 
 from . import polyhaven
+from . import sketchfab
 
 
 SAFE_NAMESPACE = {
@@ -20,6 +21,7 @@ SAFE_NAMESPACE = {
     "Quaternion": mathutils.Quaternion,
     "Color": mathutils.Color,
     "polyhaven": polyhaven,
+    "sketchfab": sketchfab,
 }
 
 
@@ -33,6 +35,13 @@ def execute_code(code: str) -> tuple[bool, str, str]:
 
     namespace = dict(SAFE_NAMESPACE)
     namespace["__builtins__"] = __builtins__
+
+    # Inject Sketchfab token so generated code doesn't need to import preferences
+    from .preferences import get_addon_preferences
+    try:
+        namespace["SKETCHFAB_TOKEN"] = get_addon_preferences().sketchfab_api_key
+    except Exception:
+        namespace["SKETCHFAB_TOKEN"] = ""
 
     try:
         with redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):

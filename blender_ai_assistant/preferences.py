@@ -67,6 +67,12 @@ class AIAssistantPreferences(AddonPreferences):
         description="Model name (e.g. qwen2.5-coder:7b, llama3.2, deepseek-coder-v2)",
     )
 
+    sketchfab_api_key: StringProperty(
+        name="Sketchfab API Key",
+        subtype="PASSWORD",
+        description="Sketchfab API token (get from sketchfab.com/settings/password)",
+    )
+
     max_retries: IntProperty(
         name="Max Retries",
         default=3,
@@ -91,6 +97,8 @@ class AIAssistantPreferences(AddonPreferences):
             layout.prop(self, "ollama_url")
             layout.prop(self, "ollama_model")
 
+        layout.separator()
+        layout.prop(self, "sketchfab_api_key")
         layout.separator()
         layout.prop(self, "max_retries")
 

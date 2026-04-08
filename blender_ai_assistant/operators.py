@@ -434,6 +434,18 @@ class AIASSIST_OT_clear_polyhaven_cache(Operator):
         return {"FINISHED"}
 
 
+class AIASSIST_OT_clear_sketchfab_cache(Operator):
+    bl_idname = "ai_assistant.clear_sketchfab_cache"
+    bl_label = "Clear Sketchfab Cache"
+    bl_description = "Delete all cached Sketchfab model downloads"
+
+    def execute(self, context: bpy.types.Context) -> set[str]:
+        from . import sketchfab
+        count, size_mb = sketchfab.clear_cache()
+        self.report({"INFO"}, f"Cleared {count} cached models ({size_mb:.1f} MB)")
+        return {"FINISHED"}
+
+
 classes = (
     AIASSIST_OT_send_message,
     AIASSIST_OT_clear_chat,
@@ -442,6 +454,7 @@ classes = (
     AIASSIST_OT_copy_errors,
     AIASSIST_OT_clear_errors,
     AIASSIST_OT_clear_polyhaven_cache,
+    AIASSIST_OT_clear_sketchfab_cache,
 )
 
 
