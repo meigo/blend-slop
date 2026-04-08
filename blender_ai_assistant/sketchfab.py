@@ -7,6 +7,7 @@ import os
 import shutil
 import urllib.request
 import urllib.error
+import re
 from typing import Any
 
 API_BASE = "https://api.sketchfab.com/v3"
@@ -75,8 +76,15 @@ def search_models(query: str, token: str | None = None, max_results: int = 10,
 
     data = _api_get(f"/search{params}", token)
 
+    query_words = query.lower().split()
     results = []
     for item in data.get("results", [])[:max_results]:
+        name = item.get("name", "").lower()
+        tags = " ".join(t.get("name", "") if isinstance(t, dict) else str(t)
+                        for t in item.get("tags", [])).lower()
+        searchable = name + " " + tags
+        if not all(re.search(r'\b' + re.escape(w) + r'\b', searchable) for w in query_words):
+            continue
         results.append({
             "uid": item["uid"],
             "name": item.get("name", ""),
